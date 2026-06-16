@@ -655,7 +655,7 @@ function setRating(id,val){
 function setTab(t){
   tab=t; calDate='';
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-  document.getElementById('t-'+t)?.classList.add('on');
+  const _tab=document.getElementById('t-'+t); if(_tab) _tab.classList.add('on');
   render();
 }
 function openCalTab(){
@@ -783,7 +783,7 @@ function closeCtx(){
 function ctxCopy(){
   const o=load().find(x=>x.id===ctxId); if(!o){ closeCtx(); return; }
   const txt=(o.raw||'').replace(/^\[D[012]\]/,'');
-  navigator.clipboard?.writeText(txt).catch(()=>{
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).catch(()=>{
     const ta=document.createElement('textarea'); ta.value=txt;
     document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
   });

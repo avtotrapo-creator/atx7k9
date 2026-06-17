@@ -491,36 +491,30 @@ function store(a){
   localStorage.setItem('pw4_bk',s);
 }
 
-async function cloudPush(order){
-  try{
-    await fetch(SUPA_URL+'/rest/v1/orders',{
-      method:'POST',
-      headers:_sh({'Prefer':'resolution=merge-duplicates'}),
-      body:JSON.stringify({id:order.id,raw:order.raw,phone:order.phone,date:order.date,courier:order.courier||'',done:order.done||false,by_user:order.by||'',rating:order.rating||null})
-    });
-  }catch(e){}
+function cloudPush(order){
+  return fetch(SUPA_URL+'/rest/v1/orders',{
+    method:'POST',
+    headers:_sh({'Prefer':'resolution=merge-duplicates'}),
+    body:JSON.stringify({id:order.id,raw:order.raw,phone:order.phone,date:order.date,courier:order.courier||'',done:order.done||false,by_user:order.by||'',rating:order.rating||null})
+  }).catch(function(){});
 }
-async function cloudDelete(id){
-  try{
-    await fetch(SUPA_URL+'/rest/v1/orders?id=eq.'+id,{method:'DELETE',headers:_sh()});
-  }catch(e){}
+function cloudDelete(id){
+  return fetch(SUPA_URL+'/rest/v1/orders?id=eq.'+id,{method:'DELETE',headers:_sh()}).catch(function(){});
 }
-async function cloudUpdate(order){
-  try{
-    await fetch(SUPA_URL+'/rest/v1/orders?id=eq.'+order.id,{
-      method:'PATCH',
-      headers:_sh(),
-      body:JSON.stringify({raw:order.raw,phone:order.phone,date:order.date,courier:order.courier||'',done:order.done||false,by_user:order.by||'',rating:order.rating||null})
-    });
-  }catch(e){}
+function cloudUpdate(order){
+  return fetch(SUPA_URL+'/rest/v1/orders?id=eq.'+order.id,{
+    method:'PATCH',
+    headers:_sh(),
+    body:JSON.stringify({raw:order.raw,phone:order.phone,date:order.date,courier:order.courier||'',done:order.done||false,by_user:order.by||'',rating:order.rating||null})
+  }).catch(function(){});
 }
-async function cloudLoad(){
-  try{
-    var r=await fetch(SUPA_URL+'/rest/v1/orders?select=*&order=id',{headers:_sh()});
+function cloudLoad(){
+  return fetch(SUPA_URL+'/rest/v1/orders?select=*&order=id',{headers:_sh()}).then(function(r){
     if(!r.ok) return null;
-    var data=await r.json();
-    return data.map(function(row){return {id:row.id,raw:row.raw,phone:row.phone,date:row.date,courier:row.courier,done:row.done,by:row.by_user,rating:row.rating||null};});
-  }catch(e){return null;}
+    return r.json().then(function(data){
+      return data.map(function(row){return {id:row.id,raw:row.raw,phone:row.phone,date:row.date,courier:row.courier,done:row.done,by:row.by_user,rating:row.rating||null};});
+    });
+  }).catch(function(){return null;});
 }
 function fixNumericDates(arr){
   // Re-detect dates for orders with explicit numeric day (not relative დღეს/ხვალ/ზეგ)
@@ -635,13 +629,14 @@ function login(n,r){
   }
   render();
 }
-async function doRefresh(){
-  const btn=document.getElementById('ref-btn');
+function doRefresh(){
+  var btn=document.getElementById('ref-btn');
   btn.style.opacity='.4'; btn.style.pointerEvents='none';
-  const a=await cloudLoad();
-  if(a && a.length>0){ store(a); }
-  render();
-  btn.style.opacity='1'; btn.style.pointerEvents='auto';
+  cloudLoad().then(function(a){
+    if(a && a.length>0){ store(a); }
+    render();
+    btn.style.opacity='1'; btn.style.pointerEvents='auto';
+  });
 }
 function logout(){
   localStorage.removeItem('pw4_session');
@@ -881,24 +876,23 @@ function highlightEditDate(raw){
   });
 }
 function closeEdit(){ document.getElementById('edit-modal').classList.remove('on'); ctxId=null; }
-async function saveEdit(){
+function saveEdit(){
   if(!ADMINS.includes(me)){ closeEdit(); return; }
-  const a=load(), o=a.find(x=>x.id===ctxId);
+  var a=load(), o=a.find(function(x){return x.id===ctxId;});
   if(o){
-    let raw=document.getElementById('e-raw').value.trim();
-    if(/თ\s*\/\s*წ/i.test(raw) && !raw.includes('📌')){
-      const lines=raw.split('\n'); lines[0]=lines[0].trimEnd()+' 📌'; raw=lines.join('\n');
+    var raw=document.getElementById('e-raw').value.trim();
+    if(/თ\s*\/\s*წ/i.test(raw) && raw.indexOf('📌')===-1){
+      var lines=raw.split('\n'); lines[0]=lines[0].trimEnd()+' 📌'; raw=lines.join('\n');
     }
     raw=autoFormat(raw);
     o.raw   = raw;
     o.phone = extractPhone(raw);
     o.date  = detectDate(raw);
     store(a);
-    await cloudUpdate(o);
+    cloudUpdate(o);
     closeEdit();
-    // Switch to the tab that matches the new date
-    const dateToTab={[today()]:'today',[tom()]:'tom',[dag()]:'dag'};
-    const newTab=dateToTab[o.date];
+    var dateToTab={}; dateToTab[today()]='today'; dateToTab[tom()]='tom'; dateToTab[dag()]='dag';
+    var newTab=dateToTab[o.date];
     if(newTab) setTab(newTab); else render();
   } else {
     closeEdit(); render();

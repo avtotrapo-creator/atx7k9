@@ -241,7 +241,7 @@ body.dark .cs-row { border-color:#2a2a2a; }
 <!-- APP -->
 <div id="app">
   <div class="hdr">
-    <div><div class="hbrand">🐷 პიწკინა</div><div class="huser" id="huser"></div></div>
+    <div><div class="hbrand">🐷 პიწკინა</div><div class="huser" id="huser"></div><div style="font-size:10px;opacity:.6;margin-top:1px">🔄 <span id="sync-time">--:--:--</span></div></div>
     <div style="display:flex;gap:6px;align-items:center">
 <button class="outbtn" id="ref-btn" onclick="doRefresh()" title="განახლება" style="background:rgba(255,255,255,.25);padding:7px 11px">🔄</button>
     <button class="outbtn" id="dark-btn" onclick="toggleDark()" title="Dark/Light" style="background:rgba(255,255,255,.25);padding:7px 11px">☀️</button>
@@ -537,8 +537,16 @@ var _realtimeTimer=null;
 function startRealtime(){
   if(_realtimeTimer) clearInterval(_realtimeTimer);
   _realtimeTimer=setInterval(function(){
-    cloudLoad().then(function(a){if(a){store(a);render();}}).catch(function(){});
-  },15000);
+    cloudLoad().then(function(a){
+      if(a){ store(a); render(); _showSyncTime(); }
+    }).catch(function(){});
+  },5000);
+}
+function _showSyncTime(){
+  var el=document.getElementById('sync-time');
+  if(!el) return;
+  var d=new Date();
+  el.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
 }
 function exportBackup(){
   const a=load();

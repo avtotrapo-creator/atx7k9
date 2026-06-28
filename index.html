@@ -1138,6 +1138,20 @@ function render(){
           const ph=(o.phone||'').replace(/\s/g,'');
           html+=cardHtml(o, ph, ctag, SLOT_COL[bk], false, dupIds.has(o.id), bk);
         });
+        // Empty paste card — only for admins, not counted in stats
+        if(ADMINS.includes(me)){
+          const _ds=d;
+          html+=`<div style="background:transparent;border-radius:14px;margin-bottom:10px;border:2px dashed ${SLOT_COL[bk]};overflow:hidden;opacity:.55">
+            <div style="padding:10px 14px">
+              <textarea rows="2" placeholder="📋 ჩასვი შეკვეთა..."
+                style="width:100%;background:transparent;border:none;outline:none;font-size:15px;font-family:inherit;resize:none;color:inherit"
+                onpaste="handleQuickPaste(event,${bk},'${_ds}')"
+                onfocus="this.style.opacity=1;this.parentElement.parentElement.style.opacity=1"
+                onblur="if(!this.value.trim()){this.style.opacity='';this.parentElement.parentElement.style.opacity='.55'}"
+              ></textarea>
+            </div>
+          </div>`;
+        }
       });
     });
   }
@@ -1184,6 +1198,30 @@ function cardHtml(o, ph, ctag, bcol, showDate, isDuplicate, slotIdx){
       ${ADMINS.includes(me)?`<span style="font-size:10px;color:#aaa;white-space:nowrap">${(()=>{const d=new Date(o.id);return(d.getDate()+'/'+(d.getMonth()+1))+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')})()}</span>`:''}
     </div>
   </div>`;
+}
+
+function handleQuickPaste(e, slotIdx, dateStr){
+  if(!ADMINS.includes(me)) return;
+  const ta = e.target;
+  setTimeout(function(){
+    const raw = ta.value.trim();
+    if(!raw) return;
+    const rawStored = '[D'+slotIdx+']'+raw;
+    const newOrder = {
+      id: Date.now(),
+      raw: rawStored,
+      phone: extractPhone(raw),
+      date: dateStr || today(),
+      courier:'',
+      done:false,
+      by:me
+    };
+    const a=load();
+    a.push(newOrder);
+    store(a);
+    render();
+    cloudPush(newOrder);
+  }, 80);
 }
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }

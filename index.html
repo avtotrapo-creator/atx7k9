@@ -1141,13 +1141,11 @@ function render(){
         // Empty paste card — only for admins, not counted in stats
         if(ADMINS.includes(me)){
           const _ds=d;
-          html+=`<div style="background:transparent;border-radius:14px;margin-bottom:10px;border:2px dashed ${SLOT_COL[bk]};overflow:hidden;opacity:.55">
-            <div style="padding:10px 14px">
-              <textarea rows="2" placeholder="📋 ჩასვი შეკვეთა..."
-                style="width:100%;background:transparent;border:none;outline:none;font-size:15px;font-family:inherit;resize:none;color:inherit"
+          html+=`<div class="card" style="border-left-color:${SLOT_COL[bk]};user-select:auto;-webkit-user-select:auto;-webkit-touch-callout:default">
+            <div style="padding:12px 14px 8px">
+              <textarea rows="6" placeholder="📋 ჩასვი შეკვეთა..."
+                style="width:100%;background:transparent;border:none;outline:none;font-size:15px;font-family:inherit;resize:none;color:inherit;display:block;line-height:1.6"
                 onpaste="handleQuickPaste(event,${bk},'${_ds}')"
-                onfocus="this.style.opacity=1;this.parentElement.parentElement.style.opacity=1"
-                onblur="if(!this.value.trim()){this.style.opacity='';this.parentElement.parentElement.style.opacity='.55'}"
               ></textarea>
             </div>
           </div>`;

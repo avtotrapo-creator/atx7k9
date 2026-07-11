@@ -1218,7 +1218,7 @@ function productTotals(orders){
       if(/ხაჭაპ/i.test(l)){ khach+=intCount(l); return; }
       if(/ლობ/i.test(l)){ lob+=intCount(l); return; }
       if(/წიწილ/i.test(l)){ chick+=intCount(l); return; }
-      if(/(^|\s)ნახ/.test(l) && !/კგ/.test(l) && l.replace(/[^Ⴀ-ჿ]/g,'').length<=8){ piglet+=0.5; return; }
+      if(/(^|\s)ნახ/.test(l) && !/კგ/.test(l) && l.replace(/[^Ⴀ-ჿ]/g,'').length<=8){ piglet+=1; return; }
       const core=l.replace(/[🐷🐖❗️❗📌⭕️*]/g,'').replace(/ბომბა|გრძელი|დაჭრ\S*|კგ|ც(?:ალი)?/gi,' ').trim();
       const isWeight = /კგ/.test(l) || /^\d+(?:\.\d+)?(?:\s*[-–]\s*\d+(?:\.\d+)?)?$/.test(core);
       if(isWeight){ piglet+=pcnt; return; }

@@ -681,12 +681,17 @@ function login(n,r){
 }
 function doRefresh(){
   var btn=document.getElementById('ref-btn');
-  btn.style.opacity='.4'; btn.style.pointerEvents='none';
-  cloudLoad().then(function(a){
-    if(a && a.length>0){ store(a); }
-    render();
-    btn.style.opacity='1'; btn.style.pointerEvents='auto';
-  });
+  if(btn){ btn.style.opacity='.4'; btn.style.pointerEvents='none'; }
+  // სრული განახლება — გვერდსაც გადატვირთავს (უახლესი ვერსია) და მონაცემებსაც ჩამოტვირთავს.
+  // network-first service worker-ის წყალობით ყოველთვის ახალი ვერსია ჩამოიტვირთება.
+  try{ location.reload(); }
+  catch(e){
+    cloudLoad().then(function(a){
+      if(a && a.length>0){ store(a); }
+      render();
+      if(btn){ btn.style.opacity='1'; btn.style.pointerEvents='auto'; }
+    });
+  }
 }
 function logout(){
   localStorage.removeItem('pw4_session');

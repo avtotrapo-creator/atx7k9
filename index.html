@@ -1274,7 +1274,9 @@ function productTotals(orders){
       if(/წიწილ/i.test(l)){ return; }
       if(/(^|\s)ნახ/.test(l) && !/კგ/.test(l) && l.replace(/[^Ⴀ-ჿ]/g,'').length<=8){ piglet+=1; return; }
       const core=l.replace(/[🐷🐖❗️❗📌⭕️*]/g,'').replace(/ბომბა|გრძელი|დაჭრ\S*|კგ|ც(?:ალი)?/gi,' ').trim();
-      const isWeight = /კგ/.test(l) || /^\d+(?:\.\d+)?(?:\s*[-–]\s*\d+(?:\.\d+)?)?$/.test(core);
+      // ბუნდოვანი წონაც (მაგ. "5-+", "5+", "6/7") — იწყება ციფრით, ქართული ასოები არ აქვს, გრძელი ნომერი (ტელეფონი) არ არის
+      const looseWeight = /^\d/.test(core) && core.replace(/[^Ⴀ-ჿ]/g,'').length===0 && !/\d{4,}/.test(core);
+      const isWeight = /კგ/.test(l) || /^\d+(?:\.\d+)?(?:\s*[-–]\s*\d+(?:\.\d+)?)?$/.test(core) || looseWeight;
       if(isWeight){ piglet+=pcnt; return; }
       if(/გოჭ/i.test(l)){ piglet+=pcnt; return; }
     });

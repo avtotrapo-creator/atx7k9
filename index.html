@@ -7,7 +7,7 @@
 (function(){
   var V='v13';
   if(location.search.indexOf('v='+V)===-1){
-    location.replace('/avto/?v='+V);
+    location.replace('?v='+V);
   }
 })();
 </script>
@@ -1403,7 +1403,7 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 </script>
 <script>
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/avto/sw.js')
+  navigator.serviceWorker.register('sw.js')
     .then(reg => {
       // Check for updates immediately and every 60 seconds
       reg.update();

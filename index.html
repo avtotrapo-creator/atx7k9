@@ -557,10 +557,37 @@ function fixNumericDates(arr){
   // UTC ymd() bug is already fixed — this function is no longer needed
   store(arr);
 }
+function _intendedDate(raw, anchor){
+  // შეკვეთის ნამდვილი თარიღი მისი ტექსტიდან, შექმნის დღის მიხედვით (anchor).
+  raw=(raw||'').replace(/^\[D[012]\]/,'');
+  var a=new Date(anchor.getFullYear(),anchor.getMonth(),anchor.getDate());
+  function _y(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  if(/დღეს/i.test(raw)) return _y(a);
+  if(/ზეგ/i.test(raw)){ var z=new Date(a); z.setDate(a.getDate()+2); return _y(z); }
+  if(/ხვალ/i.test(raw)){ var t=new Date(a); t.setDate(a.getDate()+1); return _y(t); }
+  for(var i=0;i<GEO_WDAYS.length;i++){
+    if(new RegExp(GEO_WDAYS[i][0],'i').test(raw)){
+      var wd=GEO_WDAYS[i][1]; var diff=wd-a.getDay(); if(diff<0)diff+=7;
+      var d=new Date(a); d.setDate(a.getDate()+diff); return _y(d);
+    }
+  }
+  var dm=raw.match(/(?:^|\n)(\d{1,2})\s*[-–]?\s*შ(?!ე)/);
+  if(dm){ var day=parseInt(dm[1]); if(day>=1&&day<=31){ var dd=new Date(a.getFullYear(),a.getMonth(),day); if(dd<a) dd=new Date(a.getFullYear(),a.getMonth()+1,day); return _y(dd); } }
+  return _y(a);
+}
 function repairWrongFutureDates(arr){
-  // გამორთულია: აპი აღარასდროს ცვლის შეკვეთის თარიღს ავტომატურად.
-  // შეკვეთა რჩება იმ დღეზე, რომელზეც დაიდო — მიტანილია თუ არა, მნიშვნელობა არ აქვს.
-  // თარიღი მხოლოდ ხელით, ✏️ ჩასწორებით შეიცვლება.
+  // მომავალ თარიღიან შეკვეთას ვუბრუნებთ სწორ თარიღს — მისი ტექსტიდან, შექმნის დღის მიხედვით.
+  // არასწორად „გადმოხტომილი" შეკვეთა ბრუნდება თავის ნამდვილ დღეზე (მაგ. „შაბათი" → ამ შაბათს).
+  // ნამდვილად მომავალი შეკვეთა (ნამდვილი თარიღიც მომავალშია) ხელუხლებელი რჩება.
+  var todayStr=today();
+  arr.forEach(function(o){
+    if(!o.date || o.date<=todayStr) return; // მხოლოდ მომავალ თარიღიანებს
+    var intended=_intendedDate(o.raw, new Date(o.id));
+    if(intended && intended!==o.date && intended<=todayStr){
+      o.date=intended;
+      cloudUpdate(o);
+    }
+  });
   store(arr);
 }
 var _realtimeTimer=null;
@@ -1443,41 +1470,5 @@ if('serviceWorker' in navigator){
     });
 }
 </script>
-
-<script>
-// === PIWKINA CLOUD SYNC ===
-(function() {
-  var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyBNLRYoYhWm6o48Dbi_gBTRreLTSgtzpgr149u3oYYGzWrq_jqmiFWJwq_cioedSE/exec';
-
-  function syncToCloud() {
-    try {
-      var orders = JSON.parse(localStorage.getItem('pw4') || '[]');
-      var today = new Date().toLocaleDateString('sv-SE');
-      var todayOrders = orders.filter(function(o) { return o.date === today; });
-      if (todayOrders.length === 0) return;
-      fetch(WEB_APP_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: today, orders: todayOrders })
-      }).catch(function(e) { console.log('piwkina sync error', e); });
-    } catch(e) { console.log('piwkina sync error', e); }
-  }
-
-  // Auto-sync: patch localStorage.setItem to sync when pw4 changes
-  var _origSetItem = localStorage.setItem.bind(localStorage);
-  localStorage.setItem = function(key, value) {
-    _origSetItem(key, value);
-    if (key === 'pw4') { setTimeout(syncToCloud, 300); }
-  };
-
-  // Sync on page load (after 3 seconds)
-  setTimeout(syncToCloud, 3000);
-
-  window.syncToCloud = syncToCloud;
-})();
-// === END CLOUD SYNC ===
-</script>
-
 </body>
 </html>

@@ -233,6 +233,13 @@ body.dark .cs-row { border-color:#2a2a2a; }
   <div class="ugrid" id="ugrid">
     <!-- filled by JS based on URL -->
   </div>
+  <button id="install-btn" onclick="doInstall()" style="display:none;margin:16px auto 0;background:#c0392b;color:#fff;border:none;border-radius:14px;padding:13px 22px;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 4px 12px rgba(192,57,43,.3)">📲 აპლიკაციის დაყენება ეკრანზე</button>
+  <div id="ios-install" style="display:none;background:#fff;color:#111;border-radius:14px;padding:14px 16px;margin:12px auto 0;max-width:340px;font-size:14px;line-height:1.7;box-shadow:0 4px 14px rgba(0,0,0,.15);text-align:left">
+    📱 <b>iPhone-ზე დასაყენებლად (Safari-დან):</b><br>
+    1. ქვემოთ დააჭირე <b>Share</b>-ს (□ ისრით ⬆️)<br>
+    2. ჩამოსქროლე → <b>„Add to Home Screen"</b><br>
+    3. დააჭირე <b>„Add"</b> — იკონი ეკრანზე გამოჩნდება.
+  </div>
 </div>
 
 <!-- PASSWORD MODAL -->
@@ -1423,6 +1430,27 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 })();
 </script>
 <script>
+// --- აპლიკაციის დაყენების ღილაკი (PWA install) ---
+let _deferredPrompt=null;
+function _isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true; }
+function _isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault(); _deferredPrompt=e;
+  var b=document.getElementById('install-btn'); if(b && !_isStandalone()) b.style.display='inline-block';
+});
+window.addEventListener('appinstalled', function(){ var b=document.getElementById('install-btn'); if(b) b.style.display='none'; });
+function doInstall(){
+  if(_deferredPrompt){
+    _deferredPrompt.prompt();
+    _deferredPrompt.userChoice.then(function(){ _deferredPrompt=null; var b=document.getElementById('install-btn'); if(b) b.style.display='none'; });
+  } else if(_isIOS()){
+    var io=document.getElementById('ios-install'); if(io) io.style.display=(io.style.display==='none'||!io.style.display)?'block':'none';
+  } else {
+    alert('ბრაუზერის მენიუდან აირჩიე „მთავარ ეკრანზე დამატება" / „Install app".');
+  }
+}
+(function(){ if(_isStandalone()) return; var b=document.getElementById('install-btn'); if(b) b.style.display='inline-block'; })();
+
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js')
     .then(reg => {

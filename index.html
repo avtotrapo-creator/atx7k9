@@ -558,36 +558,9 @@ function fixNumericDates(arr){
   store(arr);
 }
 function repairWrongFutureDates(arr){
-  // Repair orders wrongly pushed to future months by old fixNumericDates bug.
-  // A future-dated order is a bug if:
-  //   (a) it's already marked done=true (delivered orders can't have future dates), OR
-  //   (b) it has "NN ში" text AND was created BEFORE the NN-th day of that month
-  //       (meaning detectDate originally gave the correct current-month date,
-  //        but fixNumericDates later re-ran and pushed it to next month)
-  var todayStr=today();
-  arr.forEach(function(o){
-    if(!o.date || o.date<=todayStr) return; // only look at future-dated orders
-    var created=new Date(o.id);
-    var createdDay=created.getDate();
-    var dm=(o.raw||'').match(/(?:^|\n)(\d{1,2})\s*[-–]?\s*შ(?!ე)/);
-    var isBug=false;
-    if(o.done){
-      isBug=true; // done orders can never have future delivery dates
-    } else if(dm){
-      var day=parseInt(dm[1]);
-      // Bug: order created on or before day NN, so original date was current month,
-      // but fixNumericDates re-ran later and pushed it forward
-      if(createdDay<=day) isBug=true;
-    }
-    if(isBug && dm){
-      var day=parseInt(dm[1]);
-      var fixed=created.getFullYear()+'-'+String(created.getMonth()+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-      if(fixed!==o.date && fixed<todayStr){ // only fix if corrected date is actually in the past
-        o.date=fixed;
-        cloudUpdate(o);
-      }
-    }
-  });
+  // გამორთულია: აპი აღარასდროს ცვლის შეკვეთის თარიღს ავტომატურად.
+  // შეკვეთა რჩება იმ დღეზე, რომელზეც დაიდო — მიტანილია თუ არა, მნიშვნელობა არ აქვს.
+  // თარიღი მხოლოდ ხელით, ✏️ ჩასწორებით შეიცვლება.
   store(arr);
 }
 var _realtimeTimer=null;

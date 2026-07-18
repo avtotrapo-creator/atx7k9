@@ -265,7 +265,8 @@ body.dark .cs-row { border-color:#2a2a2a; }
   <div class="hdr">
     <div><div class="hbrand">🐷 პიწკინა</div><div class="huser" id="huser"></div><div style="font-size:10px;opacity:.6;margin-top:1px">🔄 <span id="sync-time">--:--:--</span></div></div>
     <div style="display:flex;gap:6px;align-items:center">
-<button class="outbtn" id="ref-btn" onclick="doRefresh()" title="განახლება" style="background:rgba(255,255,255,.25);padding:7px 11px">🔄</button>
+<button class="outbtn" id="install-hdr" onclick="doInstall()" title="აპლიკაციის დაყენება" style="display:none;background:rgba(255,255,255,.25);padding:7px 11px">📲</button>
+    <button class="outbtn" id="ref-btn" onclick="doRefresh()" title="განახლება" style="background:rgba(255,255,255,.25);padding:7px 11px">🔄</button>
     <button class="outbtn" id="dark-btn" onclick="toggleDark()" title="Dark/Light" style="background:rgba(255,255,255,.25);padding:7px 11px">☀️</button>
       <button class="outbtn" onclick="logout()">გასვლა</button>
     </div>
@@ -1434,22 +1435,31 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 let _deferredPrompt=null;
 function _isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true; }
 function _isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
-window.addEventListener('beforeinstallprompt', function(e){
-  e.preventDefault(); _deferredPrompt=e;
-  var b=document.getElementById('install-btn'); if(b && !_isStandalone()) b.style.display='inline-block';
-});
-window.addEventListener('appinstalled', function(){ var b=document.getElementById('install-btn'); if(b) b.style.display='none'; });
+function _showInstall(){ if(_isStandalone()) return;
+  var b=document.getElementById('install-btn'); if(b) b.style.display='inline-block';
+  var h=document.getElementById('install-hdr'); if(h) h.style.display='inline-flex';
+}
+function _hideInstall(){
+  var b=document.getElementById('install-btn'); if(b) b.style.display='none';
+  var h=document.getElementById('install-hdr'); if(h) h.style.display='none';
+}
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); _deferredPrompt=e; _showInstall(); });
+window.addEventListener('appinstalled', function(){ _deferredPrompt=null; _hideInstall(); });
 function doInstall(){
   if(_deferredPrompt){
     _deferredPrompt.prompt();
-    _deferredPrompt.userChoice.then(function(){ _deferredPrompt=null; var b=document.getElementById('install-btn'); if(b) b.style.display='none'; });
+    _deferredPrompt.userChoice.then(function(){ _deferredPrompt=null; _hideInstall(); });
   } else if(_isIOS()){
-    var io=document.getElementById('ios-install'); if(io) io.style.display=(io.style.display==='none'||!io.style.display)?'block':'none';
+    var loginEl=document.getElementById('login');
+    var onLogin = loginEl && getComputedStyle(loginEl).display!=='none';
+    var io=document.getElementById('ios-install');
+    if(onLogin && io){ io.style.display=(io.style.display==='none'||!io.style.display)?'block':'none'; }
+    else { alert('iPhone-ზე დასაყენებლად (Safari-დან):\n1. ქვემოთ Share ღილაკი (□⬆️)\n2. ჩამოსქროლე → „Add to Home Screen"\n3. „Add"'); }
   } else {
-    alert('ბრაუზერის მენიუდან აირჩიე „მთავარ ეკრანზე დამატება" / „Install app".');
+    alert('ბრაუზერის მენიუდან: „მთავარ ეკრანზე დამატება" / „Install app".');
   }
 }
-(function(){ if(_isStandalone()) return; var b=document.getElementById('install-btn'); if(b) b.style.display='inline-block'; })();
+(function(){ _showInstall(); })();
 
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js')

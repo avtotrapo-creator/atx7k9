@@ -5,7 +5,7 @@
 <script>
 // Force fresh load — bypass any cached old version
 (function(){
-  var V='v16';
+  var V='v17';
   if(location.search.indexOf('v='+V)===-1){
     location.replace('?v='+V);
   }
@@ -267,7 +267,6 @@ body.dark .cs-row { border-color:#2a2a2a; }
     <div style="display:flex;gap:6px;align-items:center">
 <button class="outbtn" id="install-hdr" onclick="doInstall()" title="აპლიკაციის დაყენება" style="display:none;background:rgba(255,255,255,.25);padding:7px 11px">📲</button>
     <button class="outbtn" id="ref-btn" onclick="doRefresh()" title="განახლება" style="background:rgba(255,255,255,.25);padding:7px 11px">🔄</button>
-    <button class="outbtn" id="clean-future-btn" onclick="cleanFuture()" title="მომავალი დღეების გასუფთავება" style="display:none;background:rgba(255,255,255,.25);padding:7px 11px">🧹</button>
     <button class="outbtn" id="dark-btn" onclick="toggleDark()" title="Dark/Light" style="background:rgba(255,255,255,.25);padding:7px 11px">☀️</button>
       <button class="outbtn" onclick="logout()">გასვლა</button>
     </div>
@@ -278,7 +277,7 @@ body.dark .cs-row { border-color:#2a2a2a; }
     <div class="tab" onclick="setTab('mine')" id="t-mine" style="display:none">ჩემი</div>
     <div class="tab" onclick="setTab('today')" id="t-today">დღეს</div>
     <div class="tab" onclick="setTab('tom')" id="t-tom">ხვალ</div>
-    <div class="tab" onclick="setTab('dag')" id="t-dag">ზეგ</div>
+    <div class="tab" onclick="setTab('dag')" id="t-dag" style="display:none">ზეგ</div>
     <div class="tab" id="t-cal" style="font-size:18px;position:relative;" onclick="openCalTab()">
       <span id="t-cal-txt" style="pointer-events:none;position:relative;z-index:1;display:inline-flex;flex-direction:column;align-items:center;width:24px;height:22px;border:2px solid currentColor;border-radius:4px;overflow:hidden;line-height:1;vertical-align:middle">
         <span style="display:block;background:currentColor;width:100%;height:7px"></span>
@@ -436,17 +435,8 @@ function detectDate(raw){
   for(const [name,wd] of GEO_WDAYS){
     if(new RegExp(name,'i').test(raw)) return weekdayDate(wd);
   }
-  const dm = raw.match(/(?:^|\n)(\d{1,2})\s*[-–]?\s*შ(?!ე)/);
-  if(dm){
-    const day=parseInt(dm[1]);
-    if(day>=1 && day<=31){
-      const now=new Date();
-      let d=new Date(now.getFullYear(), now.getMonth(), day);
-      const todayMid=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-      if(d < todayMid) d=new Date(now.getFullYear(), now.getMonth()+1, day);
-      return ymd(d);
-    }
-  }
+  // რიცხვების ("NN ში") ამოცნობა გამორთულია — აღარ გამოითვლება თარიღი ტექსტში ჩაწერილი რიცხვიდან,
+  // რომ შეკვეთა ვერასდროს გადავიდეს არასწორ (მომავალ) დღეზე. ავთოს გადაწყვეტილება 2026-07-24.
   return today();
 }
 function autoFormat(raw){
@@ -688,9 +678,9 @@ function login(n,r){
   if(r==='admin'){
     document.getElementById('addbtn').style.display='flex';
     document.getElementById('stats').style.display='grid';
-    document.getElementById('t-orders').style.display='block';
-    document.getElementById('clean-future-btn').style.display='flex';
-    setTab(localStorage.getItem('pw4_tab') || 'orders');
+    var _st=localStorage.getItem('pw4_tab');
+    if(!['today','tom','cal'].includes(_st)) _st='today';
+    setTab(_st);
   } else {
     document.getElementById('t-mine').style.display='block';
     setTab(localStorage.getItem('pw4_tab') || 'mine');
